@@ -132,4 +132,22 @@
     <PostBuildEvent>
     </PostBuildEvent>
   </PropertyGroup>
+  <PropertyGroup>
+		<ExtensionTasksPath>$(MSBuildExtensionsPath)\ExtensionPack\4.0</ExtensionTasksPath>
+	</PropertyGroup>
+	<Import Project="$(ExtensionTasksPath)\MSBuild.ExtensionPack.tasks"/>
+	<Target Name="AfterBuild">
+		<!-- Create a collection of files to scan -->
+		<CreateItem Include="$(MSBuildProjectDirectory)\..\**\*.cs">
+			<Output TaskParameter="Include" ItemName="StyleCopFiles"/>
+		</CreateItem>
+		<!-- Run the StyleCop MSBuild task -->
+		<MSBuild.ExtensionPack.CodeQuality.StyleCop TaskAction="Scan" SourceFiles="@(StyleCopFiles)" ShowOutput="true" ForceFullAnalysis="true" CacheResults="false" LogFile="$(MSBuildProjectDirectory)\..\stylecop-log.txt" OutputFile="$(MSBuildProjectDirectory)\..\stylecop-report.xml" SettingsFile="$(MSBuildProgramFiles32)\StyleCop 4.7\Settings.StyleCop">
+			<Output TaskParameter="Succeeded" PropertyName="AllPassed"/>
+			<Output TaskParameter="ViolationCount" PropertyName="Violations"/>
+			<Output TaskParameter="FailedFiles" ItemName="Failures"/>
+		</MSBuild.ExtensionPack.CodeQuality.StyleCop>
+		<Message Text="Succeeded: $(AllPassed), Violations: $(Violations)" Importance="high"/>
+		<Message Text="%(Failures.Identity) - Failed on Line %(Failures.LineNumber). %(Failures.CheckId): %(Failures.Message)"/>
+	</Target>
 </Project>
